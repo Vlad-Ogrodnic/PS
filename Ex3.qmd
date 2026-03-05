@@ -1,0 +1,205 @@
+---
+title: "Exercitiul 3"
+format: html
+editor: visual
+---
+
+Ex 3 a
+
+```{r}
+simulare_ac <- function(n) {
+  # Generam pozitiile centrului acului (distanta fata de cea mai apropiata linie)
+  pos <- runif(n, min = 0, max = 1/2)
+  
+  # Generam unghiurile acelor(intre 0 si pi)
+  theta <- runif(n, min = 0, max = pi)
+  
+  # Verificam care se intersecteaza
+  # Calculcam daca capatul de jos al acului trece peste linia de sub ac
+  intersectii <- pos - (1/2) * sin(theta) <= 0
+  
+  # 4. Calculam probabilitatea estimata
+  prob <- mean(intersectii)
+  
+  cat("Probabilitate teoretica: ", (2)/(pi), "\n")
+  cat("Probabilitate simulata:  ", prob, "\n")
+}
+
+simulare_ac(10000)
+```
+
+Ex 3 b
+
+```{r}
+simulare_cruce <- function(n) {
+  # Generam pozitiile centrului crucii (distanta fata de cea mai apropiata linie)
+  pos <- runif(n, min = 0, max = 1/2)
+  
+  # Generam unghiurile crucilor(intre 0 si pi)
+  theta <- runif(n, min = 0, max = pi)
+  
+  # Verificam care se intersecteaza
+  # Calculcam daca capatetele orientate in jos ale crucii trec peste linia de sub cruce
+  intersectii <- as.numeric(pos <= 0.5 * sin(theta)) + as.numeric(pos <= 0.5 * abs(cos(theta)))
+  Z <- intersectii/2
+  
+  # Calculam probabilitatea si varianta estimata
+  prob <- mean(Z)
+  var <- var(Z)
+  
+  cat("Media teoretica:    ", (2)/(pi), "\n")
+  cat("Media simulata:     ", prob, "\n")
+  cat("Varianta teoretica: ", ((3 - sqrt(2)) / pi) - (4 / (pi^2)), "\n")
+  cat("Varianta simulata:  ", var, "\n")
+}
+
+simulare_cruce(10000)
+```
+
+Ex 3 c
+
+```{r}
+simulare_ac <- function(n, d, L) {
+  if (d < L){
+    stop("Lungimea acului (L) trebuie sa fie mai mica decat distanta dintre linii (d)")
+    }
+  # Generam pozitiile centrului acului (distanta fata de cea mai apropiata linie)
+  pos <- runif(n, min = 0, max = d/2)
+  
+  # Generam unghiurile acelor(intre 0 si pi)
+  theta <- runif(n, min = 0, max = pi)
+  
+  # Verificam care se intersecteaza
+  # Calculcam daca capatul de jos al acului trece peste linia de sub ac
+  intersectii <- pos - (L/2) * sin(theta) <= 0
+  
+  # 4. Calculam probabilitatea estimata
+  prob <- mean(intersectii)
+  
+  cat("Probabilitate teoretica: ", (2*L)/(pi*d), "\n")
+  cat("Probabilitate simulata:  ", prob, "\n")
+}
+
+simulare_ac(10000, 10, 6.7)
+```
+
+Ex 3 d
+
+```{r}
+simulare_ac_linii <- function(n, d, L) {
+  if (d < L) {
+    stop("Diametrul cercului (d) trebuie sa fie mai mare sau egal cu lungimea acului (L)")
+  }
+  
+  # Unghiul directiei normalei liniei
+  theta <- runif(n, min = 0, max = 2 * pi)
+  
+  # Distanta de la centrul acului la linie
+  h <- runif(n, min = 0, max = d / 2)
+  
+  # Verificam intersectiile
+  # Proiectia acului pe directia normalei liniei este L * |cos(u)|.
+  # Consideram acul ca fiind Ox 
+  # intersectia are loc daca distanta h este mai mica sau egala cu 
+  # proiectia jumatatii acului pe normala liniei.
+  
+  intersectii <- h <= (L / 2) * abs(cos(theta))
+  
+  # Calculam probabilitatea estimata
+  prob<- mean(intersectii)
+  
+  cat("Probabilitate teoretica: ", (2 * L) / (pi * d), "\n")
+  cat("Probabilitate simulata:  ", prob, "\n")
+}
+
+simulare_ac_linii(100000, 10, 6.7)
+```
+
+Ex 3 e
+
+```{r}
+simulare_ac_x_y <- function(n_simulari = 1000000, L = 0.5, d1 = 1, d2 = 1) {
+  if (L >= min(d1, d2)) {
+    stop("Eroare: Lungimea acului (L) trebuie sa fie mai mica decat d1 si d2.")
+  }
+  
+  # Theta: unghiul acului fata de orizontala [0, pi]
+  theta <- runif(n_simulari, min = 0, max = pi)
+  
+  # x: Distanta centrului acului pana la cea mai apropiata linie verticala (latura d1)
+  # Distanta poate fi intre 0 si d1/2
+  x_dist <- runif(n_simulari, min = 0, max = d1/2)
+  
+  # y: Distanta centrului acului pana la cea mai apropiata linie orizontala (latura d2)
+  # Distanta poate fi intre 0 si d2/2
+  y_dist <- runif(n_simulari, min = 0, max = d2/2)
+  
+  # Verificam conditiile de intersectie
+  # Proiectiile jumatatii acului pe axe
+  proiectie_x <- (L/2) * abs(cos(theta))
+  proiectie_y <- (L/2) * sin(theta) # sin e pozitiv pe [0, pi]
+  
+  # Conditia A: Intersecteaza linia verticala
+  int_d1 <- x_dist <= proiectie_x
+  
+  # Conditia B: Intersecteaza linia orizontala
+  int_d2 <- y_dist <= proiectie_y
+  
+  # Intersecteaza ORICARE linie (Reuniunea evenimentelor)
+  int_orice <- int_d1 | int_d2
+  
+  prob_simulata <- mean(int_orice)
+  
+  prob_teoretica <- (L * (2*d1 + 2*d2 - L)) / (pi * d1 * d2)
+  
+  cat("Probabilitate Simulata:  ", prob_simulata, "\n")
+  cat("Probabilitate Teoretica: ", prob_teoretica, "\n")
+}
+
+simulare_ac_x_y(n_simulari = 100000, L = 0.6, d1 = 1, d2 = 1.5)
+```
+
+Ex 3 f
+
+```{r}
+las_vegas_probabilitate <- function(epsilon) {
+  L <- 1
+  d <- 1
+  
+  # Valoarea teoretica pe care dorim sa o confirmam
+  prob_teoretica <- 2 / pi
+  
+  intersectii <- 0
+  total_aruncari <- 0
+  prob_estimata <- 0
+  eroare_standard <- Inf
+  
+  # Algoritmul ruleaza pana cand eroarea estimarii este sub pragul epsilon
+  # Folosim eroarea standard a proportiei: sqrt(p*(1-p)/n)
+  while (eroare_standard > epsilon || total_aruncari < 100) {
+    total_aruncari <- total_aruncari + 1
+    
+    # Simulam aruncarea
+    pos <- runif(1, min = 0, max = d/2)
+    theta <- runif(1, min = 0, max = pi)
+    
+    if (pos <= (L/2) * sin(theta)) {
+      intersectii <- intersectii + 1
+    }
+    
+    # Actualizam estimarea si eroarea
+    if (total_aruncari > 10) {
+      prob_estimata <- intersectii / total_aruncari
+      # Calculam eroarea standard
+      eroare_standard <- sqrt((prob_estimata * (1 - prob_estimata)) / total_aruncari)
+    }
+  }
+  
+  cat("Probabilitate calculata:  ", prob_estimata, "\n")
+  cat("Probabilitate teoretica:  ", prob_teoretica, "\n")
+  cat("Incercari efectuate:      ", total_aruncari, "\n")
+  cat("Eroare fata de teoretica: ", eroare_standard, "\n")
+}
+
+las_vegas_probabilitate(epsilon = 0.005)
+```

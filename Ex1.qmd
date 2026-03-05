@@ -1,0 +1,172 @@
+---
+title: "Exercitiul 1.qmd"
+format: html
+editor: visual
+---
+
+Ex 1. 2
+
+```{r}
+#CERINTA 2
+simulare_acceptare_respingere <- function(n_total = 1000) {
+  # Scop: Simuleaza 1000 de puncte in patratul [-1, 1]^2
+  # si verifica cate dintre ele cad in discul unitate.
+  
+  # 1. Generam toate coordonatele deodata
+  x <- runif(n_total, min = -1, max = 1)
+  y <- runif(n_total, min = -1, max = 1)
+  
+  # 2. Verific conditia matematica pentru fiecare punct
+  este_in_disc <- (x^2 + y^2 <= 1)
+  
+  # 3. Separ datele pentru statistici si culori
+  x_acc <- x[este_in_disc]
+  y_acc <- y[este_in_disc]
+  
+  x_rej <- x[!este_in_disc]
+  y_rej <- y[!este_in_disc]
+  
+  # 4. Calcul Statistici 
+  nr_acceptate <- length(x_acc)
+  proportie_obtinuta <- nr_acceptate / n_total
+  proportie_teoretica <- pi / 4 
+  
+  # 5. Rezultate
+  cat("Puncte care au cazut in disc:", nr_acceptate, "\n")
+  cat("Puncte respinse:             ", length(x_rej), "\n")
+  cat("Proportie Teoretica (pi/4):  ", format(proportie_teoretica, digits=5), "\n")
+  cat("Proportie Obtinuta:          ", format(proportie_obtinuta, digits=5), "\n")
+  cat("Eroare de estimare:          ", format(abs(proportie_teoretica - proportie_obtinuta), digits=5), "\n")
+  
+  # 6. Returnarea datelor
+  return(list(x_acc = x_acc, y_acc = y_acc, 
+              x_rej = x_rej, y_rej = y_rej, 
+              n_total = n_total))
+}
+
+rezultate <-simulare_acceptare_respingere(1000)
+
+
+
+reprezentare_grafica_simulare <- function(rezultate) {
+  # Extrag datele din lista primita
+  x_acc <- rezultate$x_acc
+  y_acc <- rezultate$y_acc
+  x_rej <- rezultate$x_rej
+  y_rej <- rezultate$y_rej
+  n_total <- rezultate$n_total
+  
+  plot(NULL, xlim = c(-1.1, 1.2), ylim = c(-1.1, 1.1), 
+       xlab = "X", ylab = "Y", 
+       main = paste("Metoda Acceptare si Respingere"),
+       asp = 1)
+  
+  grid()
+  
+  # Desenez punctele
+  points(x_rej, y_rej, col = "red", pch = 19, cex = 0.6)
+  points(x_acc, y_acc, col = "blue", pch = 19, cex = 0.6)
+  
+  # Contururi geometrice
+  t <- seq(0, 2*pi, length.out = 200)
+  lines(cos(t), sin(t), lwd = 2, col = "black")
+  rect(-1, -1, 1, 1, border = "black", lty = 2)
+  legend("topright", 
+         legend = c("In Disc (Acceptat)", "In Patrat (Respins)"),
+         col = c("blue", "red"), 
+         pch = 19, 
+         bg = "white", 
+         pt.cex = 1,      
+         inset = 0.01)    
+}
+reprezentare_grafica_simulare(rezultate)
+```
+
+Ex 1.3
+
+```{r}
+#CERINTA 3
+calcul_medie_distanta <- function(rezultate) {
+  # Scop: Calculeaza distanta medie fata de centru fara coordonate polare
+  # si o compara cu valoarea teoretica (2/3).
+  
+  # 1. Extrag DOAR punctele care sunt pe disc
+  x <- rezultate$x_acc
+  y <- rezultate$y_acc
+  
+  # 2.Distanta Euclidiana pentru fiecare punct
+  distante <- sqrt(x^2 + y^2)
+  
+  # 3.Media aritmetica a acestor distante
+  media_simulata <- mean(distante)
+  
+  # 4. Media teoretica
+  # (Voi demonstra matematic dupa asta ca este 2/3)
+  media_teoretica <- 2/3
+  
+  # 5. Afisez rezultatele
+  cat("Numar puncte analizate:", length(distante), "\n")
+  cat("Media Teoretica (2/3): ", format(media_teoretica, digits=6), "\n")
+  cat("Media Simulata:        ", format(media_simulata, digits=6), "\n")
+  
+  # Eroarea
+  eroare <- abs(media_teoretica - media_simulata)
+  cat("Eroare absoluta:       ", format(eroare, digits=6), "\n")
+}
+calcul_medie_distanta(rezultate)
+```
+
+Ex 1.5
+
+```{r}
+#CERINTA 5
+simulare_polare <- function(N) {
+  # 1. Generez coordonatele polare
+  # Unghiul este uniform distribuit in [0 , 2*pi]
+  theta <- runif(N, min = 0, max = 2 * pi)
+  
+  # Raza R trebuie generata astfel incat sa respecte densitatea 2r
+  # Folosesc transformarea inversa: r = sqrt(u), unde u este uniform(0,1)
+  # Daca as folosi doar runif(N), punctele s-ar aglomera gresit in centru
+  r <- sqrt(runif(N)) 
+  
+  # 2. Convertesc in coordonate carteziene
+  x <- r * cos(theta)
+  y <- r * sin(theta)
+  
+  # Returnez un data frame cu coordonatele
+  return(data.frame(x = x, y = y))
+}
+
+
+N <- 1000
+date_generate <- simulare_polare(N)
+
+
+# 3. Reprezentarea Grafica
+reprezentare_grafica_polare <- function(date_simulate) {
+  # Extrag coordonatele
+  x <- date_simulate$x
+  y <- date_simulate$y
+  plot(x, y, 
+       col = "blue",          
+       pch = 16,              
+       cex = 0.6,             
+       asp = 1,               
+       xlim = c(-1, 1), 
+       ylim = c(-1, 1),
+       xlab = "X", 
+       ylab = "Y",
+       main = "Simulare in Coordonate Polare")
+  
+  theta_contur <- seq(0, 2 * pi, length.out = 100)
+  lines(cos(theta_contur), sin(theta_contur), col = "red", lwd = 2)
+  
+  # Legenda
+  legend("topright", legend = c("Puncte simulate", "Contur Cerc"),
+         col = c("blue", "red"), pch = c(16, NA), lty = c(NA, 1), cex = 0.7)
+}
+
+
+reprezentare_grafica_polare(date_generate)
+```
